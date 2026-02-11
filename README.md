@@ -1,217 +1,89 @@
 # HY Web3 钱包生成工具
 
-一个基于 Java 的多链（BTC、ETH、TRON、Solana）钱包生成与校验工具，支持随机生成、批量生成、以及通过 12 个英文助记词（BIP39）恢复生成，并输出严格的验证报告（包含以太坊 EIP-55 校验、地址与私钥格式检查等）。
+一个基于 Java 的多链（BTC, ETH, TRON, Solana）钱包生成与校验工具。
+支持**高强度随机数生成**、**批量生成**、以及通过 **12 个英文助记词（BIP39）** 恢复生成，并输出严格的验证报告（包含以太坊 EIP-55 校验、地址与私钥格式检查等）。
 
 ---
 
 ## 1. 工具介绍
 
-- 名称：HY Web3 钱包生成工具（hy-wallet-generate）
-- 用途：
-  - 快速生成多链钱包地址与私钥
-  - 通过 12 个英文助记词恢复派生同样的钱包信息
-  - 对生成结果进行格式与规范的严格校验并输出验证报告
-- 主要功能：
-  - 生成 1 个钱包
-  - 批量生成多个钱包
-  - 通过助记词（12 词）生成钱包
-  - 验证报告：包括 EIP-55 检查、地址格式合规（BTC P2PKH/Bech32、ETH、TRON、SOL）、私钥长度与字符集规范、基础一致性自检
-- 技术栈与核心依赖：
-  - JDK 21
-  - Maven（maven-shade-plugin 打包可执行 Fat JAR）
-  - bitcoinj（BIP39/32/44/84，BTC 地址与 WIF）
-  - web3j（ETH 地址与签名算法）
-  - BouncyCastle（加密算法与 Keccak）
-  - SLF4J（日志接口，当前版本固定为 1.7.36）
-- 版本信息与维护状态：
-  - 当前版本：v1.0.0（active）
-  - 维护状态：活跃维护，后续将根据需求新增特性（如参数模式、CSV/JSON 导出、更多链支持等）
+- **名称**：HY Web3 钱包生成工具（hy-wallet-generate）
+- **核心功能**：
+  - **多链支持**：一键生成 BTC (Legacy/SegWit), ETH, SOL, TRON 地址与私钥。
+  - **批量生成**：支持指定数量批量生成，适合开发测试或大规模地址生成。
+  - **助记词恢复**：支持导入 BIP39 标准的 12 词助记词，确定性地派生所有链地址。
+  - **安全验证**：内置 `Validator` 模块，对生成的每一个地址和私钥进行正则、校验和（Checksum）、长度等严格检查，确保可用性。
+- **技术亮点**：
+  - **真随机源**：底层使用 `java.security.SecureRandom`，确保私钥熵值安全。
+  - **标准兼容**：
+    - **BTC**: BIP32/BIP44/BIP84 (P2PKH & Bech32)
+    - **ETH**: BIP44 (m/44'/60'...) + EIP-55 Mixed-case Checksum
+    - **SOL**: SLIP-0010 (Ed25519 Hardened)
+    - **TRON**: Keccak-256 + Double SHA256 Checksum
+- **技术栈**：JDK 21, Maven, bitcoinj, web3j, BouncyCastle
 
 ---
 
 ## 2. 使用方式
 
-### 2.1 安装与配置
+### 2.1 环境准备
 
-1. 安装 JDK 21（确保 `JAVA_HOME` 已正确设置，`java -version` 输出为 21 或以上）。
-2. 安装 Maven 3.8+（推荐 3.9+）。
-3. 克隆或下载本项目到本地目录（例如 `d:\java-works\hy-wallet-generate`）。
-4. 在项目根目录执行打包命令：
+1. **JDK 21+**：确保 `java -version` 输出 21 或更高版本。
+2. **构建项目**：
    ```bash
    mvn -q -DskipTests package
    ```
-   打包成功后，会在 `target/` 目录生成 `hy-wallet-generate.jar`。
+   构建完成后，可执行文件位于 `target/hy-wallet-generate.jar`。
 
-### 2.2 运行命令与参数说明（交互式）
+### 2.2 运行工具
 
-- 基本运行：
-  ```bash
-  java -jar target/hy-wallet-generate.jar
-  ```
-  控制台菜单：
-  - 1. 生成1个钱包
-  - 2. 批量生成钱包（需输入生成数量）
-  - 3. 通过助记词生成钱包（输入12个英文单词）
-  - 请输入选项(1/2/3):
-
-- 选项说明：
-  - 1：随机生成 1 个钱包，输出各链地址与私钥，同时附带验证报告。
-  - 2：输入生成数量（正整数），批量生成并依次输出每个钱包的信息与验证报告。
-  - 3：输入 12 个英文助记词（单词之间用单个空格分隔，大小写不敏感，统一按小写校验），校验通过后生成同样的钱包信息与验证报告。
-
-- Windows 下将“选项”和“助记词”一并通过管道传入可能受 Shell 行为影响，建议交互式逐步输入。如果确需一次性输入，可使用 PowerShell Here-String：
-  ```powershell
-  @"
-  3
-  abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
-  "@ | java -jar target\hy-wallet-generate.jar
-  ```
-
-### 2.3 典型使用场景的示例代码（程序化调用）
-
-> 以下示例演示如何在自定义 Java 程序中调用核心生成器。请确保以 JDK 21 编译，且已将本项目源码或产物纳入依赖。
-
-```java
-// 示例：程序化调用 WalletGenerator 生成一个钱包
-// 说明：该代码片段仅为演示用途，需在同一代码库或正确引入依赖的情况下编译运行。
-
-import com.hy.wallet.core.WalletGenerator;
-import com.hy.wallet.model.WalletInfo;
-
-public class ExampleGenerateOne {
-    /**
-     * 示例主方法：生成一个钱包并打印基本信息
-     */
-    public static void main(String[] args) {
-        WalletGenerator generator = new WalletGenerator();
-        WalletInfo wallet = generator.generateOne();
-        // 打印部分信息（完整输出请参考 CLI 工具）
-        System.out.println("Mnemonic: " + String.join(" ", wallet.getMnemonic()));
-        System.out.println("ETH Address: " + wallet.getEthAddress());
-        System.out.println("ETH Private: " + wallet.getEthPrivateHex());
-    }
-}
+```bash
+java -jar target/hy-wallet-generate.jar
 ```
 
-```java
-// 示例：使用 12 个助记词生成钱包
-// 助记词必须通过 BIP39 校验，WalletGenerator 会基于该助记词派生多链地址与私钥。
+**交互式菜单**：
+1. **生成 1 个钱包**：屏幕直接打印助记词、各链地址/私钥及**验证报告**。
+2. **批量生成钱包**：输入数量（如 100），快速批量生成。
+3. **通过助记词生成**：输入已有的 12 个助记词（空格分隔），恢复对应的多链地址。
 
-import com.hy.wallet.core.WalletGenerator;
-import com.hy.wallet.model.WalletInfo;
-import java.util.Arrays;
+### 2.3 私钥格式说明
 
-public class ExampleFromMnemonic {
-    /**
-     * 示例主方法：基于助记词生成钱包
-     */
-    public static void main(String[] args) {
-        WalletGenerator generator = new WalletGenerator();
-        // 统一使用小写助记词，确保为 12 词，单空格分隔
-        var mnemonic = Arrays.asList(
-            "abandon", "abandon", "abandon", "abandon", "abandon", "abandon",
-            "abandon", "abandon", "abandon", "abandon", "abandon", "about"
-        );
-        WalletInfo wallet = generator.generateFromMnemonic(mnemonic);
-        System.out.println("BTC Legacy: " + wallet.getBtcLegacyAddress());
-        System.out.println("BTC WIF   : " + wallet.getBtcLegacyWif());
-    }
-}
-```
-
-### 2.4 构建与部署
-
-- 本项目使用 `maven-shade-plugin` 打包为可执行的 Fat JAR（包含依赖），可在安装了 **Java 21** 的操作系统上直接运行（Windows/Linux/macOS）。
-- 部署方式：分发 `target/hy-wallet-generate.jar` 文件并在目标环境执行：
-  ```bash
-  java -jar hy-wallet-generate.jar
-  ```
-- 日志：使用 SLF4J 1.7.36，默认输出到控制台。如果遇到 `StaticLoggerBinder` 相关警告，请确保 `slf4j-api` 版本与绑定器兼容（本项目已固定为 1.7.36）。
+| 链 | 地址格式 | 私钥格式 | 备注 |
+| :--- | :--- | :--- | :--- |
+| **BTC** | Legacy (1...) <br> SegWit (bc1...) | WIF (Wallet Import Format) | 标准格式，大多数钱包支持导入 |
+| **ETH** | 0x开头, 40字符 | Hex (0x开头, 64字符) | 标准私钥格式 |
+| **TRON** | T开头, Base58 | Hex (0x开头, 64字符) | 兼容 TronLink 导入 |
+| **SOL** | Base58 | Base58 (64字节: 32私钥+32公钥) | 兼容 Phantom/Solflare 导入 |
 
 ---
 
-## 3. 注意事项
+## 3. 安全性与注意事项 (IMPORTANT)
 
-### 3.1 系统环境要求与兼容性
+### 3.1 安全最佳实践
+- **⚠️ 离线运行**：生成真实资产钱包时，请务必在**断网**的设备上运行。
+- **⚠️ 助记词保管**：助记词拥有所有链资产的控制权，请抄写在纸上物理保管，**切勿截图或复制到联网设备**。
+- **熵源安全**：本工具使用操作系统提供的强随机源（`/dev/random` 或同级实现），非伪随机，从算法层面保证了不可预测性。
 
-- JDK：必须为 Java 21（推荐），低版本 JDK 可能导致编译或运行异常。
-- 操作系统：Windows/Linux/macOS（已在 Windows 环境验证）。
-- 网络：生成与校验为本地计算操作，无需联网。
-
-### 3.2 安全注意事项
-
-- 私钥与助记词为极高敏感信息，请在离线、可信环境中运行，并妥善保管输出内容。
-- 请勿将助记词或私钥复制到不可信的软件或网络服务中。
-- 建议结合企业合规要求使用加密文件输出（后续版本将提供加密导出与参数模式）。
-- 本工具不会将生成结果持久化到磁盘，除非在扩展功能中显式开启。
-
-### 3.3 已知问题与限制
-
-- 验证报告主要进行格式与规范层面的校验，不与链上状态交互（例如余额、UTXO、Nonce 不在校验范围）。
-- Solana 私钥输出格式依赖当前实现的编码方式（项目内一致），若需特定格式（如 64 字节十六进制或 base58），可在后续版本中按需调整与扩展。
-- Windows 下通过管道一次性输入“选项 + 助记词”可能受 Shell 行为差异影响，建议交互式输入或使用 PowerShell Here-String。
-- 若出现 SLF4J `StaticLoggerBinder` 警告，请确认依赖版本或使用本项目的固定版本配置；若自行改动依赖版本，需要确保绑定器与 API 对齐。
-
-### 3.4 故障排除与常见问题（FAQ）
-
-- 问：运行提示“无效的选项，程序结束。”
-  - 答：该提示通常因为未按菜单输入或未提供后续输入。请按菜单输入 1/2/3，并按提示继续输入参数或助记词。
-
-- 问：助记词校验失败（长度/词表/校验和错误）如何处理？
-  - 答：
-    - 长度错误：确保正好为 12 个英文单词。
-    - 词表错误：确保所有单词均在 BIP39 英文标准词表中。
-    - 校验和错误：请重新确认助记词的正确性（大小写不敏感，但工具统一以小写校验）。
-
-- 问：如何批量生成并保存到文件？
-  - 答：当前版本为交互式输出，后续将提供命令行参数与 CSV/JSON 导出功能。可暂时将控制台输出重定向到文件保存：
-    ```bash
-    java -jar target/hy-wallet-generate.jar > wallets.txt
-    ```
-
-- 问：出现 `SecurityException: Invalid signature file digest` 问题怎么办？
-  - 答：该问题一般源于可执行 JAR 中的签名文件与依赖混合导致。项目已在打包阶段通过 `maven-shade-plugin` 排除签名文件；如自行变更打包配置，请确保仍然排除 `META-INF/*.SF`、`META-INF/*.DSA`、`META-INF/*.RSA`。
-
-- 问：出现 SLF4J 相关警告或日志不输出？
-  - 答：请确保 `slf4j-api` 与绑定器版本一致，建议使用本项目固定的 `1.7.36`。重新执行：
-    ```bash
-    mvn -q -DskipTests package
-    ```
+### 3.2 验证报告
+每次生成钱包后，程序会自动运行 `Validator` 模块，输出如下检查结果：
+- `[助记词]`: 检查单词数量与 BIP39 词表合规性。
+- `[ETH]`: 检查是否符合 EIP-55 大小写校验和标准。
+- `[BTC]`: 验证地址格式与 WIF 私钥的对应关系。
+- `[SOL/TRON]`: 验证 Base58 编码与私钥长度。
 
 ---
 
-## 4. 项目结构（简要）
+## 4. 常见问题 (FAQ)
 
-> 目录结构仅展示关键位置。
-
-```
-├── pom.xml
-├── README.md
-└── src/
-    └── main/
-        └── java/
-            └── com/hy/wallet/
-                ├── Main.java                  // 控制台交互入口，包含菜单与输出
-                ├── core/WalletGenerator.java // 核心生成器：随机、批量、助记词生成
-                ├── model/WalletInfo.java     // 钱包信息模型
-                ├── services/                 // 各链服务（BTC/ETH/TRON/SOL）
-                ├── utils/                    // 校验与加密相关工具（例如 EIP-55 校验）
-                └── validation/Validator.java // 严格校验并输出验证报告
-```
+- **Q: 为什么生成的 ETH 地址带有大小写？**
+  - A: 这是 EIP-55 标准，用于防止地址输入错误。本工具生成的地址默认带有校验和。
+- **Q: Solana 私钥导入钱包失败？**
+  - A: 本工具输出的是 64 字节（Secret Key + Public Key）的 Base58 编码格式，这是 Solana 标准格式。如果导入失败，请检查是否有多余空格。
+- **Q: 可以在 Java 8 环境运行吗？**
+  - A: **不可以**。项目使用了 Java 21 的新特性（如 `record`、新版 `switch`），必须使用 JDK 21+ 运行。
 
 ---
 
-## 5. 路线图（Roadmap）
+## 5. 免责声明
 
-- 命令行参数模式（如 `--mnemonic "..."`、`--count N`）
-- CSV/JSON 导出（含验证报告）
-- 更严格的地址/私钥校验（深度反向推导、更多链支持）
-- 单元测试与持续集成
-
----
-
-
-## 6. 反馈与支持
-
-- 问题反馈：可在项目 Issue 中提交详细复现步骤与系统环境信息。
-- 功能建议：欢迎提出新链支持、导出格式与自动化审计需求。
+本工具仅供技术研究与开发测试使用。使用者需自行承担保管私钥的责任，开发者不对因私钥丢失或泄露导致的资产损失负责。

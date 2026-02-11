@@ -9,6 +9,8 @@ import java.security.SecureRandom;
  */
 public class CryptoUtils {
 
+    private static final SecureRandom INSTANCE = new SecureRandom();
+
     /**
      * 获取全局安全随机数生成器（强随机）
      * 
@@ -16,6 +18,6 @@ public class CryptoUtils {
      */
     public static SecureRandom secureRandom() {
         // 默认JDK实现为强随机源，满足真随机需求
-        return new SecureRandom();
+        return INSTANCE;
     }
 }

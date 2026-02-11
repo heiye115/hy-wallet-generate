@@ -111,11 +111,11 @@ public class Main {
         System.out.println("6.TRON地址: " + wallet.getTronAddress() + "  私钥: " + wallet.getTronPrivateHex());
 
         // 追加严格验证报告
-//         try {
-//         String report = com.hy.wallet.validation.Validator.validateWallet(wallet);
-//         System.out.println(report);
-//         } catch (Exception e) {
-//         System.out.println("[验证] 发生错误: " + e.getMessage());
-//         }
+//        try {
+//            String report = com.hy.wallet.validation.Validator.validateWallet(wallet);
+//            System.out.println(report);
+//        } catch (Exception e) {
+//            System.out.println("[验证] 发生错误: " + e.getMessage());
+//        }
     }
 }
