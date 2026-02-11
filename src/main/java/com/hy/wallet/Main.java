@@ -40,7 +40,7 @@ public class Main {
             switch (option) {
                 case "1" -> {
                     WalletInfo wallet = generator.generateOne();
-                    printWallet(wallet, 1);
+                    printWallet(wallet, 1, true);
                 }
                 case "2" -> {
                     System.out.print("请输入生成数量(正整数): ");
@@ -52,7 +52,7 @@ public class Main {
                     }
                     List<WalletInfo> wallets = generator.generateBatch(count);
                     for (int i = 0; i < wallets.size(); i++) {
-                        printWallet(wallets.get(i), i + 1);
+                        printWallet(wallets.get(i), i + 1, false);
                     }
                 }
                 case "3" -> {
@@ -84,7 +84,7 @@ public class Main {
                         return;
                     }
                     WalletInfo wallet = generator.generateFromMnemonic(mnemonic);
-                    printWallet(wallet, 1);
+                    printWallet(wallet, 1, true);
                 }
                 default -> System.err.println("无效的选项，程序结束。");
             }
@@ -97,10 +97,11 @@ public class Main {
     /**
      * 按指定输出模板打印单个钱包信息。
      *
-     * @param wallet 钱包信息对象
-     * @param index  序号，从1开始
+     * @param wallet           钱包信息对象
+     * @param index            序号，从1开始
+     * @param enableValidation 是否显示验证报告
      */
-    private static void printWallet(WalletInfo wallet, int index) {
+    private static void printWallet(WalletInfo wallet, int index, boolean enableValidation) {
         System.out.println("==========钱包(" + index + ")==========");
         System.out.println("1.您的助记词(12位): " + String.join(" ", wallet.getMnemonic()));
         System.out.println("2.BTC(Legacy)地址: " + wallet.getBtcLegacyAddress() + "  私钥: " + wallet.getBtcLegacyWif());
@@ -111,11 +112,13 @@ public class Main {
         System.out.println("6.TRON地址: " + wallet.getTronAddress() + "  私钥: " + wallet.getTronPrivateHex());
 
         // 追加严格验证报告
-//        try {
-//            String report = com.hy.wallet.validation.Validator.validateWallet(wallet);
-//            System.out.println(report);
-//        } catch (Exception e) {
-//            System.out.println("[验证] 发生错误: " + e.getMessage());
-//        }
+        if (enableValidation) {
+            try {
+                String report = com.hy.wallet.validation.Validator.validateWallet(wallet);
+                System.out.println(report);
+            } catch (Exception e) {
+                System.out.println("[验证] 发生错误: " + e.getMessage());
+            }
+        }
     }
 }
