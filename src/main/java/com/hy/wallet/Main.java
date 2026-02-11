@@ -107,8 +107,8 @@ public class Main {
         System.out.println("2.BTC(Legacy)地址: " + wallet.getBtcLegacyAddress() + "  私钥: " + wallet.getBtcLegacyWif());
         System.out.println(
                 "3.BTC(Native SegWit)地址: " + wallet.getBtcSegwitAddress() + " 私钥: " + wallet.getBtcSegwitWif());
-        System.out.println("4.SOL地址: " + wallet.getSolAddress() + "  私钥: " + wallet.getSolPrivate());
-        System.out.println("5.ETH地址: " + wallet.getEthAddress() + "  私钥: " + wallet.getEthPrivateHex());
+        System.out.println("4.ETH(EVM通用)地址: " + wallet.getEthAddress() + "  私钥: " + wallet.getEthPrivateHex());
+        System.out.println("5.SOL地址: " + wallet.getSolAddress() + "  私钥: " + wallet.getSolPrivate());
         System.out.println("6.TRON地址: " + wallet.getTronAddress() + "  私钥: " + wallet.getTronPrivateHex());
 
         // 追加严格验证报告
