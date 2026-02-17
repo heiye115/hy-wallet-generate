@@ -30,18 +30,19 @@ public class BTCService {
     /**
      * 生成Legacy (P2PKH) 地址与私钥（WIF）
      * @param seedBytes BIP32种子字节
+     * @param index 地址索引
      * @return 地址与WIF私钥
      */
-    public static BtcPair generateLegacy(byte[] seedBytes) {
-        // m/44'/0'/0'/0/0
+    public static BtcPair generateLegacy(byte[] seedBytes, int index) {
+        // m/44'/0'/0'/0/index
         DeterministicKey root = HDKeyDerivation.createMasterPrivateKey(seedBytes);
         DeterministicKey purpose44 = HDKeyDerivation.deriveChildKey(root, new ChildNumber(44, true));
         DeterministicKey coinType0 = HDKeyDerivation.deriveChildKey(purpose44, new ChildNumber(0, true));
         DeterministicKey account0 = HDKeyDerivation.deriveChildKey(coinType0, new ChildNumber(0, true));
         DeterministicKey change0 = HDKeyDerivation.deriveChildKey(account0, new ChildNumber(0, false));
-        DeterministicKey index0 = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(0, false));
+        DeterministicKey indexKey = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(index, false));
 
-        ECKey ecKey = ECKey.fromPrivate(index0.getPrivKeyBytes());
+        ECKey ecKey = ECKey.fromPrivate(indexKey.getPrivKeyBytes());
         String address = LegacyAddress.fromKey(MAIN, ecKey).toString();
         String wif = ecKey.getPrivateKeyAsWiF(MAIN);
         return new BtcPair(address, wif);
@@ -50,18 +51,19 @@ public class BTCService {
     /**
      * 生成Native SegWit (Bech32/P2WPKH) 地址与私钥（WIF）
      * @param seedBytes BIP32种子字节
+     * @param index 地址索引
      * @return 地址与WIF私钥
      */
-    public static BtcPair generateSegwit(byte[] seedBytes) {
-        // m/84'/0'/0'/0/0
+    public static BtcPair generateSegwit(byte[] seedBytes, int index) {
+        // m/84'/0'/0'/0/index
         DeterministicKey root = HDKeyDerivation.createMasterPrivateKey(seedBytes);
         DeterministicKey purpose84 = HDKeyDerivation.deriveChildKey(root, new ChildNumber(84, true));
         DeterministicKey coinType0 = HDKeyDerivation.deriveChildKey(purpose84, new ChildNumber(0, true));
         DeterministicKey account0 = HDKeyDerivation.deriveChildKey(coinType0, new ChildNumber(0, true));
         DeterministicKey change0 = HDKeyDerivation.deriveChildKey(account0, new ChildNumber(0, false));
-        DeterministicKey index0 = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(0, false));
+        DeterministicKey indexKey = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(index, false));
 
-        ECKey ecKey = ECKey.fromPrivate(index0.getPrivKeyBytes());
+        ECKey ecKey = ECKey.fromPrivate(indexKey.getPrivKeyBytes());
         String address = SegwitAddress.fromKey(MAIN, ecKey).toString();
         String wif = ecKey.getPrivateKeyAsWiF(MAIN);
         return new BtcPair(address, wif);

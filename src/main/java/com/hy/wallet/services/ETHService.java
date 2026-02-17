@@ -28,18 +28,19 @@ public class ETHService {
      * 生成ETH地址与私钥
      * 
      * @param seedBytes BIP32种子
+     * @param index 地址索引
      * @return 地址与私钥
      */
-    public static EthPair generateEth(byte[] seedBytes) {
+    public static EthPair generateEth(byte[] seedBytes, int index) {
         // 使用bitcoinj进行BIP32派生，获取最终私钥
         DeterministicKey root = HDKeyDerivation.createMasterPrivateKey(seedBytes);
         DeterministicKey purpose44 = HDKeyDerivation.deriveChildKey(root, new ChildNumber(44, true));
         DeterministicKey coinType60 = HDKeyDerivation.deriveChildKey(purpose44, new ChildNumber(60, true));
         DeterministicKey account0 = HDKeyDerivation.deriveChildKey(coinType60, new ChildNumber(0, true));
         DeterministicKey change0 = HDKeyDerivation.deriveChildKey(account0, new ChildNumber(0, false));
-        DeterministicKey index0 = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(0, false));
+        DeterministicKey indexKey = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(index, false));
 
-        BigInteger priv = new BigInteger(1, index0.getPrivKeyBytes());
+        BigInteger priv = new BigInteger(1, indexKey.getPrivKeyBytes());
         ECKeyPair ecKeyPair = ECKeyPair.create(priv);
         // 以web3j获得地址（小写无校验），再转换为EIP-55校验和地址
         String lower = Keys.getAddress(ecKeyPair.getPublicKey());

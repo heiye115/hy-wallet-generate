@@ -33,20 +33,21 @@ public class TronService {
      * 生成TRON地址与私钥
      * 
      * @param seedBytes BIP32种子
+     * @param index 地址索引
      * @return 地址与私钥
      */
-    public static TronPair generateTron(byte[] seedBytes) {
-        // m/44'/195'/0'/0/0
+    public static TronPair generateTron(byte[] seedBytes, int index) {
+        // m/44'/195'/0'/0/index
         DeterministicKey root = HDKeyDerivation.createMasterPrivateKey(seedBytes);
         DeterministicKey purpose44 = HDKeyDerivation.deriveChildKey(root, new ChildNumber(44, true));
         DeterministicKey coinType195 = HDKeyDerivation.deriveChildKey(purpose44, new ChildNumber(195, true));
         DeterministicKey account0 = HDKeyDerivation.deriveChildKey(coinType195, new ChildNumber(0, true));
         DeterministicKey change0 = HDKeyDerivation.deriveChildKey(account0, new ChildNumber(0, false));
-        DeterministicKey index0 = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(0, false));
+        DeterministicKey indexKey = HDKeyDerivation.deriveChildKey(change0, new ChildNumber(index, false));
 
-        BigInteger priv = new BigInteger(1, index0.getPrivKeyBytes());
+        BigInteger priv = new BigInteger(1, indexKey.getPrivKeyBytes());
         // 计算未压缩公钥
-        byte[] uncompressedPubKey = index0.getPubKeyPoint().getEncoded(false); // 65字节，首字节0x04
+        byte[] uncompressedPubKey = indexKey.getPubKeyPoint().getEncoded(false); // 65字节，首字节0x04
         byte[] pubKeyNoPrefix = Arrays.copyOfRange(uncompressedPubKey, 1, uncompressedPubKey.length);
 
         // keccak-256

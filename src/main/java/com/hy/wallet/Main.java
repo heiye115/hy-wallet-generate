@@ -34,7 +34,8 @@ public class Main {
             System.out.println("1. 生成1个钱包");
             System.out.println("2. 批量生成钱包（需输入生成数量）");
             System.out.println("3. 通过助记词生成钱包（输入12个英文单词）");
-            System.out.print("请输入选项(1/2/3): ");
+            System.out.println("4. 派生指定索引的钱包（输入助记词和索引号）");
+            System.out.print("请输入选项(1/2/3/4): ");
 
             String option = scanner.nextLine().trim();
             switch (option) {
@@ -58,33 +59,30 @@ public class Main {
                 case "3" -> {
                     System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
                     String line = scanner.nextLine().trim();
-                    // 检查是否为单个空格分隔的12个词
-                    if (!line.matches("(?i)^[a-z]+( [a-z]+){11}$")) {
-                        System.err.println("输入格式错误：必须为12个英文单词，且使用单个空格分隔。");
-                        return;
-                    }
-                    String[] parts = line.split(" ");
-                    List<String> mnemonic = new java.util.ArrayList<>();
-                    for (String p : parts)
-                        mnemonic.add(p.toLowerCase());
-                    // 使用bitcoinj进行BIP39严格校验（词表与校验和）
-                    try {
-                        org.bitcoinj.crypto.MnemonicCode.INSTANCE.check(mnemonic);
-                    } catch (org.bitcoinj.crypto.MnemonicException.MnemonicLengthException e) {
-                        System.err.println("助记词长度错误：" + e.getMessage());
-                        return;
-                    } catch (org.bitcoinj.crypto.MnemonicException.MnemonicWordException e) {
-                        System.err.println("存在非BIP39标准英文单词：" + e.getMessage());
-                        return;
-                    } catch (org.bitcoinj.crypto.MnemonicException.MnemonicChecksumException e) {
-                        System.err.println("助记词校验失败（checksum错误）：" + e.getMessage());
-                        return;
-                    } catch (Exception e) {
-                        System.err.println("助记词校验异常：" + e.getMessage());
-                        return;
-                    }
+                    List<String> mnemonic = parseAndValidateMnemonic(line);
+                    if (mnemonic == null) return;
                     WalletInfo wallet = generator.generateFromMnemonic(mnemonic);
                     printWallet(wallet, 1, true);
+                }
+                case "4" -> {
+                    System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
+                    String line = scanner.nextLine().trim();
+                    List<String> mnemonic = parseAndValidateMnemonic(line);
+                    if (mnemonic == null) return;
+
+                    System.out.print("请输入地址索引号(非负整数): ");
+                    String indexStr = scanner.nextLine().trim();
+                    try {
+                        int index = Integer.parseInt(indexStr);
+                        if (index < 0) {
+                            System.err.println("索引号必须为非负整数！");
+                            return;
+                        }
+                        WalletInfo wallet = generator.generateFromMnemonic(mnemonic, index);
+                        printWallet(wallet, 1, true);
+                    } catch (NumberFormatException e) {
+                        System.err.println("索引号格式错误！");
+                    }
                 }
                 default -> System.err.println("无效的选项，程序结束。");
             }
@@ -92,6 +90,37 @@ public class Main {
             log.error("程序运行出现异常", e);
             System.err.println("发生错误: " + e.getMessage());
         }
+    }
+
+    /**
+     * 解析并校验助记词
+     * @param line 输入行
+     * @return 助记词列表，校验失败返回null
+     */
+    private static List<String> parseAndValidateMnemonic(String line) {
+        // 检查是否为单个空格分隔的12个词
+        if (!line.matches("(?i)^[a-z]+( [a-z]+){11}$")) {
+            System.err.println("输入格式错误：必须为12个英文单词，且使用单个空格分隔。/ Format error: Must be 12 English words separated by single spaces.");
+            return null;
+        }
+        String[] parts = line.split(" ");
+        List<String> mnemonic = new java.util.ArrayList<>();
+        for (String p : parts)
+            mnemonic.add(p.toLowerCase());
+        // 使用bitcoinj进行BIP39严格校验（词表与校验和）
+        try {
+            org.bitcoinj.crypto.MnemonicCode.INSTANCE.check(mnemonic);
+            return mnemonic;
+        } catch (org.bitcoinj.crypto.MnemonicException.MnemonicLengthException e) {
+            System.err.println("助记词长度错误：" + e.getMessage());
+        } catch (org.bitcoinj.crypto.MnemonicException.MnemonicWordException e) {
+            System.err.println("存在非BIP39标准英文单词：" + e.getMessage());
+        } catch (org.bitcoinj.crypto.MnemonicException.MnemonicChecksumException e) {
+            System.err.println("助记词校验失败（checksum错误）：" + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("助记词校验异常：" + e.getMessage());
+        }
+        return null;
     }
 
     /**

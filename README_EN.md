@@ -45,6 +45,7 @@ java -jar target/hy-wallet-generate.jar
 1. **Generate 1 Wallet**: Prints mnemonic, chain addresses/private keys, and **validation report** directly to the screen.
 2. **Batch Generate Wallets**: Input quantity (e.g., 100) to quickly generate in batch.
 3. **Generate from Mnemonic**: Input existing 12 mnemonic words (space-separated) to recover corresponding multi-chain addresses.
+4. **Derive Wallet at Specific Index**: Input mnemonic and address index (e.g., 1, 2...) to derive child wallets.
 
 ### 2.3 Private Key Formats
 

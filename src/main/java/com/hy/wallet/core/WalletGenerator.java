@@ -43,30 +43,30 @@ public class WalletGenerator {
             DeterministicSeed seed = new DeterministicSeed(mnemonic, null, "", 0L);
             byte[] seedBytes = seed.getSeedBytes();
 
-            // 4) 生成各链地址与私钥
+            // 4) 生成各链地址与私钥 (默认index=0)
             WalletInfo info = new WalletInfo();
             info.setMnemonic(mnemonic);
 
             // BTC：Legacy & Native SegWit
-            BTCService.BtcPair legacy = BTCService.generateLegacy(seedBytes);
-            BTCService.BtcPair segwit = BTCService.generateSegwit(seedBytes);
+            BTCService.BtcPair legacy = BTCService.generateLegacy(seedBytes, 0);
+            BTCService.BtcPair segwit = BTCService.generateSegwit(seedBytes, 0);
             info.setBtcLegacyAddress(legacy.address());
             info.setBtcLegacyWif(legacy.wif());
             info.setBtcSegwitAddress(segwit.address());
             info.setBtcSegwitWif(segwit.wif());
 
             // ETH
-            ETHService.EthPair ethPair = ETHService.generateEth(seedBytes);
+            ETHService.EthPair ethPair = ETHService.generateEth(seedBytes, 0);
             info.setEthAddress(ethPair.address());
             info.setEthPrivateHex(ethPair.privateHex());
 
             // SOL
-            SolanaService.SolPair solPair = SolanaService.generateSol(seedBytes);
+            SolanaService.SolPair solPair = SolanaService.generateSol(seedBytes, 0);
             info.setSolAddress(solPair.address());
             info.setSolPrivate(solPair.privateEncoded());
 
             // TRON
-            TronService.TronPair tronPair = TronService.generateTron(seedBytes);
+            TronService.TronPair tronPair = TronService.generateTron(seedBytes, 0);
             info.setTronAddress(tronPair.address());
             info.setTronPrivateHex(tronPair.privateHex());
 
@@ -96,6 +96,16 @@ public class WalletGenerator {
      * @return 钱包信息
      */
     public WalletInfo generateFromMnemonic(List<String> mnemonic) {
+        return generateFromMnemonic(mnemonic, 0);
+    }
+
+    /**
+     * 使用用户提供的12词助记词生成指定索引的钱包（BIP39校验应在调用前完成）。
+     * @param mnemonic 12个英文助记词（规范化为小写）
+     * @param index 地址索引
+     * @return 钱包信息
+     */
+    public WalletInfo generateFromMnemonic(List<String> mnemonic, int index) {
         try {
             // BIP32种子（空口令）
             DeterministicSeed seed = new DeterministicSeed(mnemonic, null, "", 0L);
@@ -105,25 +115,25 @@ public class WalletGenerator {
             info.setMnemonic(mnemonic);
 
             // BTC：Legacy & Native SegWit
-            BTCService.BtcPair legacy = BTCService.generateLegacy(seedBytes);
-            BTCService.BtcPair segwit = BTCService.generateSegwit(seedBytes);
+            BTCService.BtcPair legacy = BTCService.generateLegacy(seedBytes, index);
+            BTCService.BtcPair segwit = BTCService.generateSegwit(seedBytes, index);
             info.setBtcLegacyAddress(legacy.address());
             info.setBtcLegacyWif(legacy.wif());
             info.setBtcSegwitAddress(segwit.address());
             info.setBtcSegwitWif(segwit.wif());
 
             // ETH
-            ETHService.EthPair ethPair = ETHService.generateEth(seedBytes);
+            ETHService.EthPair ethPair = ETHService.generateEth(seedBytes, index);
             info.setEthAddress(ethPair.address());
             info.setEthPrivateHex(ethPair.privateHex());
 
             // SOL
-            SolanaService.SolPair solPair = SolanaService.generateSol(seedBytes);
+            SolanaService.SolPair solPair = SolanaService.generateSol(seedBytes, index);
             info.setSolAddress(solPair.address());
             info.setSolPrivate(solPair.privateEncoded());
 
             // TRON
-            TronService.TronPair tronPair = TronService.generateTron(seedBytes);
+            TronService.TronPair tronPair = TronService.generateTron(seedBytes, index);
             info.setTronAddress(tronPair.address());
             info.setTronPrivateHex(tronPair.privateHex());
 

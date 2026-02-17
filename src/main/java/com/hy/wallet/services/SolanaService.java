@@ -27,15 +27,16 @@ public class SolanaService {
      * 生成Solana地址与私钥
      * 
      * @param seedBytes BIP32种子
+     * @param index 账户索引（m/44'/501'/index'/0'）
      * @return 地址与私钥
      */
-    public static SolPair generateSol(byte[] seedBytes) {
-        // 路径：m/44'/501'/0'/0'
+    public static SolPair generateSol(byte[] seedBytes, int index) {
+        // 路径：m/44'/501'/index'/0'
         Slip10Ed25519.Node master = Slip10Ed25519.master(seedBytes);
         Slip10Ed25519.Node m44 = Slip10Ed25519.deriveHardened(master, 44);
         Slip10Ed25519.Node c501 = Slip10Ed25519.deriveHardened(m44, 501);
-        Slip10Ed25519.Node acc0 = Slip10Ed25519.deriveHardened(c501, 0);
-        Slip10Ed25519.Node change0 = Slip10Ed25519.deriveHardened(acc0, 0);
+        Slip10Ed25519.Node acc = Slip10Ed25519.deriveHardened(c501, index);
+        Slip10Ed25519.Node change0 = Slip10Ed25519.deriveHardened(acc, 0);
 
         byte[] privKey32 = change0.getKey();
         Ed25519PrivateKeyParameters priv = new Ed25519PrivateKeyParameters(privKey32, 0);
