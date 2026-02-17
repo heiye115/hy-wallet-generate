@@ -25,70 +25,82 @@ public class Main {
      * @param args 启动参数（不使用）
      */
     public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(System.in);
-            WalletGenerator generator = new WalletGenerator();
+        Scanner scanner = new Scanner(System.in);
+        WalletGenerator generator = new WalletGenerator();
 
-            System.out.println("================= HY Web3 钱包生成工具 =================");
-            System.out.println("请选择功能：");
-            System.out.println("1. 生成1个钱包");
-            System.out.println("2. 批量生成钱包（需输入生成数量）");
-            System.out.println("3. 通过助记词生成钱包（输入12个英文单词）");
-            System.out.println("4. 派生指定索引的钱包（输入助记词和索引号）");
-            System.out.print("请输入选项(1/2/3/4): ");
+        while (true) {
+            try {
+                System.out.println("================= HY Web3 钱包生成工具 =================");
+                System.out.println("请选择功能：");
+                System.out.println("1. 生成1个钱包");
+                System.out.println("2. 批量生成钱包（需输入生成数量）");
+                System.out.println("3. 通过助记词生成钱包（输入12个英文单词）");
+                System.out.println("4. 派生指定索引的钱包（输入助记词和索引号）");
+                System.out.println("5. 退出");
+                System.out.print("请输入选项(1/2/3/4/5): ");
 
-            String option = scanner.nextLine().trim();
-            switch (option) {
-                case "1" -> {
-                    WalletInfo wallet = generator.generateOne();
-                    printWallet(wallet, 1, true);
-                }
-                case "2" -> {
-                    System.out.print("请输入生成数量(正整数): ");
-                    String countStr = scanner.nextLine().trim();
-                    int count = Integer.parseInt(countStr);
-                    if (count <= 0) {
-                        System.err.println("数量必须为正整数！");
+                String option = scanner.nextLine().trim();
+                switch (option) {
+                    case "1" -> {
+                        WalletInfo wallet = generator.generateOne();
+                        printWallet(wallet, 1, true);
+                    }
+                    case "2" -> {
+                        System.out.print("请输入生成数量(正整数): ");
+                        String countStr = scanner.nextLine().trim();
+                        try {
+                            int count = Integer.parseInt(countStr);
+                            if (count <= 0) {
+                                System.err.println("数量必须为正整数！");
+                                break;
+                            }
+                            List<WalletInfo> wallets = generator.generateBatch(count);
+                            for (int i = 0; i < wallets.size(); i++) {
+                                printWallet(wallets.get(i), i + 1, false);
+                            }
+                        } catch (NumberFormatException e) {
+                            System.err.println("输入无效，请输入正整数！");
+                        }
+                    }
+                    case "3" -> {
+                        System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
+                        String line = scanner.nextLine().trim();
+                        List<String> mnemonic = parseAndValidateMnemonic(line);
+                        if (mnemonic == null) break;
+                        WalletInfo wallet = generator.generateFromMnemonic(mnemonic);
+                        printWallet(wallet, 1, true);
+                    }
+                    case "4" -> {
+                        System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
+                        String line = scanner.nextLine().trim();
+                        List<String> mnemonic = parseAndValidateMnemonic(line);
+                        if (mnemonic == null) break;
+
+                        System.out.print("请输入地址索引号(非负整数): ");
+                        String indexStr = scanner.nextLine().trim();
+                        try {
+                            int index = Integer.parseInt(indexStr);
+                            if (index < 0) {
+                                System.err.println("索引号必须为非负整数！");
+                                break;
+                            }
+                            WalletInfo wallet = generator.generateFromMnemonic(mnemonic, index);
+                            printWallet(wallet, 1, true);
+                        } catch (NumberFormatException e) {
+                            System.err.println("索引号格式错误！");
+                        }
+                    }
+                    case "5", "退出" -> {
+                        System.out.println("程序已退出。");
                         return;
                     }
-                    List<WalletInfo> wallets = generator.generateBatch(count);
-                    for (int i = 0; i < wallets.size(); i++) {
-                        printWallet(wallets.get(i), i + 1, false);
-                    }
+                    default -> System.err.println("输入无效，请重新选择");
                 }
-                case "3" -> {
-                    System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
-                    String line = scanner.nextLine().trim();
-                    List<String> mnemonic = parseAndValidateMnemonic(line);
-                    if (mnemonic == null) return;
-                    WalletInfo wallet = generator.generateFromMnemonic(mnemonic);
-                    printWallet(wallet, 1, true);
-                }
-                case "4" -> {
-                    System.out.println("请输入12个英文助记词（单词之间使用单个空格分隔）:");
-                    String line = scanner.nextLine().trim();
-                    List<String> mnemonic = parseAndValidateMnemonic(line);
-                    if (mnemonic == null) return;
-
-                    System.out.print("请输入地址索引号(非负整数): ");
-                    String indexStr = scanner.nextLine().trim();
-                    try {
-                        int index = Integer.parseInt(indexStr);
-                        if (index < 0) {
-                            System.err.println("索引号必须为非负整数！");
-                            return;
-                        }
-                        WalletInfo wallet = generator.generateFromMnemonic(mnemonic, index);
-                        printWallet(wallet, 1, true);
-                    } catch (NumberFormatException e) {
-                        System.err.println("索引号格式错误！");
-                    }
-                }
-                default -> System.err.println("无效的选项，程序结束。");
+                System.out.println(); // 换行，方便阅读
+            } catch (Exception e) {
+                log.error("程序运行出现异常", e);
+                System.err.println("发生错误: " + e.getMessage());
             }
-        } catch (Exception e) {
-            log.error("程序运行出现异常", e);
-            System.err.println("发生错误: " + e.getMessage());
         }
     }
 
