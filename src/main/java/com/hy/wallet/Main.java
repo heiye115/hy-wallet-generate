@@ -143,23 +143,48 @@ public class Main {
      * @param enableValidation 是否显示验证报告
      */
     private static void printWallet(WalletInfo wallet, int index, boolean enableValidation) {
-        System.out.println("==========钱包(" + index + ")==========");
-        System.out.println("1.您的助记词(12位): " + String.join(" ", wallet.getMnemonic()));
-        System.out.println("2.BTC(Legacy)地址: " + wallet.getBtcLegacyAddress() + "  私钥: " + wallet.getBtcLegacyWif());
-        System.out.println(
-                "3.BTC(Native SegWit)地址: " + wallet.getBtcSegwitAddress() + " 私钥: " + wallet.getBtcSegwitWif());
-        System.out.println("4.ETH(EVM通用)地址: " + wallet.getEthAddress() + "  私钥: " + wallet.getEthPrivateHex());
-        System.out.println("5.SOL地址: " + wallet.getSolAddress() + "  私钥: " + wallet.getSolPrivate());
-        System.out.println("6.TRON地址: " + wallet.getTronAddress() + "  私钥: " + wallet.getTronPrivateHex());
+        String border = "=".repeat(80);
+        String subBorder = "-".repeat(80);
+        
+        System.out.println(border);
+        System.out.printf(" 🌟 钱包序号: %d%n", index);
+        System.out.println(subBorder);
+        
+        // 助记词部分
+        System.out.println(" [助记词 / Mnemonic]");
+        System.out.println(" " + String.join(" ", wallet.getMnemonic()));
+        System.out.println(subBorder);
+
+        // 地址与私钥部分
+        String format = " %-20s | %s%n";
+        System.out.println(" [链 / Chain]          | [地址 / Address] & [私钥 / Private Key]");
+        System.out.println(subBorder);
+        
+        printRow("BTC (Legacy)", wallet.getBtcLegacyAddress(), wallet.getBtcLegacyWif());
+        printRow("BTC (SegWit)", wallet.getBtcSegwitAddress(), wallet.getBtcSegwitWif());
+        printRow("ETH (EVM)", wallet.getEthAddress(), wallet.getEthPrivateHex());
+        printRow("SOL (Solana)", wallet.getSolAddress(), wallet.getSolPrivate());
+        printRow("TRON (TRC20)", wallet.getTronAddress(), wallet.getTronPrivateHex());
+        
+        System.out.println(border);
 
         // 追加严格验证报告
         if (enableValidation) {
             try {
                 String report = com.hy.wallet.validation.Validator.validateWallet(wallet);
+                System.out.println("\n [验证报告]");
+                System.out.println(subBorder);
                 System.out.println(report);
+                System.out.println(border);
             } catch (Exception e) {
                 System.out.println("[验证] 发生错误: " + e.getMessage());
             }
         }
+    }
+
+    private static void printRow(String chain, String address, String privateKey) {
+        System.out.printf(" %-20s | Addr: %s%n", chain, address);
+        System.out.printf(" %-20s | Priv: %s%n", "", privateKey);
+        System.out.println("-".repeat(80)); // 每行之间的分隔符
     }
 }
